@@ -42,7 +42,7 @@ public class ContinenteDaoJDBC implements IContinenteDAO {
     }
 
     @Override
-    public Continente actualizarContinente(Continente continente) {
+    public void actualizarContinente(Continente continente) {
 
         String sentenciaSQL = """
                 UPDATE T_CONTINENTE
@@ -64,11 +64,10 @@ public class ContinenteDaoJDBC implements IContinenteDAO {
             e.printStackTrace();
         }
 
-        return continente;
     }
 
     @Override
-    public Continente crearContinente(Continente continente) {
+    public void crearContinente(Continente continente) {
 
         String sentenciaSQL = """
                 INSERT INTO T_CONTINENTE (codigo, nombre_continente)
@@ -88,8 +87,6 @@ public class ContinenteDaoJDBC implements IContinenteDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return continente;
     }
 
     @Override

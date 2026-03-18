@@ -1,115 +1,101 @@
-# Maven – Resumen rápido
+# CI/CD con Maven y GitHub Actions
 
-## ¿Qué es Maven?
+## 1. Estructura del proyecto Maven
 
-**Apache Maven** es una herramienta de gestión y automatización de proyectos Java.
+Un proyecto Maven bien organizado es la base para que el pipeline de CI funcione sin problemas:
 
-Permite compilar, probar, empaquetar y gestionar dependencias de forma automática.
-Todo se configura mediante un archivo central llamado `pom.xml`.
-
----
-
-## Conceptos básicos
-
-### POM (Project Object Model)
-
-Es el archivo `pom.xml`, donde se define:
-
-* Información del proyecto (`groupId`, `artifactId`, `version`)
-* Dependencias
-* Plugins
-* Configuración de compilación
-
-Ejemplo básico:
-```xml
-<groupId>org.ejemplo</groupId>
-<artifactId>mi-proyecto</artifactId>
-<version>1.0.0</version>
+```
+proyecto/
+├── src/
+│   ├── main/java/     # Código de producción
+│   └── test/java/     # Tests unitarios
+└── pom.xml            # Dependencias, plugins y versión de Java
 ```
 
+> **Regla clave:** Si `mvn clean install` funciona en local → debe funcionar en CI.
+
 ---
 
-## Ciclo de vida de Maven (Build Lifecycle)
+## 2. Dependencias y plugins esenciales
 
-El ciclo de vida principal está formado por fases que se ejecutan en orden:
+### Testing
+- **`spring-boot-starter-test`** (proyectos Spring Boot): incluye JUnit 5, AssertJ y Mockito.
 
-| Fase     | Descripción                                 |
-| -------- | ------------------------------------------- |
-| validate | Comprueba que el proyecto es correcto       |
-| compile  | Compila el código fuente                    |
-| test     | Ejecuta los tests                           |
-| package  | Empaqueta la aplicación (JAR/WAR)           |
-| verify   | Verifica que el paquete es válido           |
-| install  | Instala el paquete en el repositorio local  |
-| deploy   | Publica el paquete en un repositorio remoto |
+### Plugins Maven importantes
 
-Ejemplo de ejecución:
-```bash
-mvn clean install
+| Plugin | Función |
+|--------|---------|
+| `maven-compiler-plugin` | Compila el proyecto |
+| `maven-surefire-plugin` | Ejecuta tests unitarios |
+| `maven-failsafe-plugin` | Ejecuta tests de integración (opcional) |
+
+---
+
+## 3. Tests
+
+Buenas prácticas para que los tests pasen en un entorno limpio de CI:
+
+- Deben ejecutarse **sin depender del IDE**.
+- Evitar dependencias de rutas locales o bases de datos externas → usar **H2 en memoria** si es necesario.
+- Nombres descriptivos con un único escenario por test:
+  ```
+  metodo_cuandoCondicion_retornaResultado
+  ```
+
+---
+
+## 4. Flujo básico con GitHub Actions
+
+Archivo de configuración: `.github/workflows/maven.yml`
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '23'
+          distribution: 'temurin'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build with Maven
+        run: mvn clean install
 ```
 
----
+### ¿Qué hace `mvn clean install`?
+1. **clean** → Elimina artefactos anteriores
+2. **compile** → Compila el código fuente
+3. **test** → Ejecuta los tests unitarios
+4. **package** → Genera el `.jar` o `.war`
 
-## Repositorios
-
-Maven descarga las dependencias desde repositorios.
-
-Tipos:
-
-* **Local** → en el ordenador (`~/.m2`)
-* **Central** → repositorio público de Maven
-* **Remoto** → repositorios privados (Nexus, Artifactory)
+> Si algún test falla, GitHub Actions marcará el workflow como **Failed** ✗
 
 ---
 
-## Dependencias
+## 5. Buenas prácticas
 
-Las librerías necesarias para el proyecto se declaran en el `pom.xml`.
-
-Ejemplo:
-```xml
-<dependency>
-    <groupId>mysql</groupId>
-    <artifactId>mysql-connector-java</artifactId>
-    <version>8.0.33</version>
-</dependency>
-```
-
-Maven descargará automáticamente la librería.
-
----
-
-## Comandos Maven más usados
-
-| Comando       | Función                                      |
-| ------------- | -------------------------------------------- |
-| `mvn compile` | Compila el proyecto                          |
-| `mvn test`    | Ejecuta los tests                            |
-| `mvn package` | Genera el JAR/WAR                            |
-| `mvn install` | Instala el artefacto en el repositorio local |
-| `mvn clean`   | Elimina la carpeta `target`                  |
-
----
-
-## Estructura típica de un proyecto Maven
-```
-proyecto
-│
-├─ pom.xml
-└─ src
-   ├─ main
-   │  ├─ java
-   │  └─ resources
-   └─ test
-      └─ java
-```
-
----
-
-## Idea clave
-
-Maven sigue el principio **"Convention over Configuration"**:
-si respetas su estructura estándar de proyecto, **necesitas muy poca configuración**.
-
----
-Fuentes: [ChatGPT](https://chat.openai.com) + [Claude](https://claude.ai)
+1. **Mantén el `pom.xml` limpio**: no sobreescribas versiones de dependencias gestionadas por Spring Boot.
+2. **Evita dependencias del entorno local**: sin rutas absolutas ni servicios externos sin mock.
+3. **Usa perfiles Maven** si necesitas configuraciones distintas para CI (p. ej., base de datos H2 para tests).
+4. **Verifica la versión de Java**: el runner de GitHub Actions debe usar la misma que la configurada en el proyecto.
+5. **Habilita la caché de Maven**: reduce significativamente el tiempo de build en cada ejecución.

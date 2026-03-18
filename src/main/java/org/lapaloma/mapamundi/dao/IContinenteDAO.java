@@ -6,9 +6,9 @@ import org.lapaloma.mapamundi.vo.Continente;
 
 public interface IContinenteDAO {
 	public Continente obtenerContinentePorClave(String codigo) ;
-	public Continente actualizarContinente(Continente coche) ;
-	public Continente crearContinente(Continente coche);
-	public void borrarContinente(Continente coche);
+	public void actualizarContinente(Continente continente) ;
+	public void crearContinente(Continente continente);
+	public void borrarContinente(Continente continente);
 	public List<Continente> obtenerListaContinentes(); 
 	public List<Continente> obtenerContinentePorNombre(String nombre);
 }

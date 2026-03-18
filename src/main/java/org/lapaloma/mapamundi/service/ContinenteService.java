@@ -7,36 +7,60 @@ import java.util.List;
 
 import org.lapaloma.mapamundi.dao.IContinenteDAO;
 import org.lapaloma.mapamundi.dao.impl.ContinenteDaoJDBC;
+import org.lapaloma.mapamundi.excepcion.ContinenteNoEncontradoException;
 import org.lapaloma.mapamundi.vo.Continente;
 
-/**
- * Isidoro Nevares Martín - Virgen de la Paloma Fecha creación: 13 mar 2026
- */
 public class ContinenteService {
+
     IContinenteDAO continenteDAO = new ContinenteDaoJDBC();
 
     public Continente obtenerContinentePorClave(String codigo) {
-        Continente continente = null;
+    	
+    	
+        if (codigo == null || codigo.isBlank()) {
+            throw new IllegalArgumentException("Código inválido");
+        }
 
-        continente = continenteDAO.obtenerContinentePorClave(codigo);
+        Continente continente = continenteDAO.obtenerContinentePorClave(codigo);
 
+        // Esta línea simula un error de negocio, ignorando lo que devuelve el DAO
+        continente = null;
+        
+        
+        if (continente == null) {
+            throw new ContinenteNoEncontradoException(
+                    "No existe el continente con código: " + codigo
+            );
+        }
+    	
         return continente;
     }
 
     public List<Continente> obtenerListaContinentes() {
-        List<Continente> listaContinentes = null;
 
-        listaContinentes = continenteDAO.obtenerListaContinentes();
+        List<Continente> lista = continenteDAO.obtenerListaContinentes();
 
-        return listaContinentes;
+        if (lista == null || lista.isEmpty()) {
+            throw new RuntimeException("No hay continentes disponibles");
+        }
+
+        return lista;
     }
 
     public List<Continente> obtenerContinentePorNombre(String nombre) {
-        List<Continente> listaContinentes = null;
 
-        listaContinentes = continenteDAO.obtenerContinentePorNombre(nombre);
+        if (nombre == null || nombre.isBlank()) {
+            throw new IllegalArgumentException("Nombre inválido");
+        }
 
-        return listaContinentes;
+        List<Continente> lista = continenteDAO.obtenerContinentePorNombre(nombre);
+
+        if (lista == null || lista.isEmpty()) {
+            throw new ContinenteNoEncontradoException(
+                    "No existen continentes con nombre: " + nombre
+            );
+        }
+
+        return lista;
     }
-
 }
