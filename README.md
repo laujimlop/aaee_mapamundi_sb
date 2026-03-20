@@ -1,6 +1,6 @@
 # Gestión de secretos en distintos entornos (Java + Docker + CI/CD)
 
-Este documento resume cómo manejar de manera segura credenciales y secretos en distintos entornos: desarrollo local, Docker, docker-compose y CI/CD (GitHub Actions).
+Este documento resume cómo manejar de manera segura credenciales y secretos en distintos entornos: desarrollo local, Eclipse, Docker, docker-compose y CI/CD (GitHub Actions).
 
 ---
 
@@ -17,7 +17,7 @@ if (user == null || password == null) {
 }
 ```
 
-Definir las variables en la sesión activa:
+### Definir variables de entorno en la sesión activa
 
 **Windows (PowerShell):**
 ```powershell
@@ -31,13 +31,26 @@ export DB_USER=mi_usuario
 export DB_PASSWORD=mi_password
 ```
 
-> Las variables solo existen en la sesión activa. Configura persistencia si es necesario (`.bashrc`, `.zshrc`, variables de entorno del sistema).
+> Las variables solo existen en la sesión activa. Para persistirlas, se pueden añadir a `.bashrc`, `.zshrc` o a las variables de entorno del sistema.
+
+### En Eclipse (Run Configuration)
+
+1. Click derecho sobre el proyecto → **Run As → Run Configurations…**
+2. Selecciona tu aplicación → pestaña **Environment**
+3. Añade las variables:
+   ```
+   Name: DB_USER     Value: mi_usuario
+   Name: DB_PASSWORD Value: mi_password
+   ```
+4. Apply → Run
+
+> Esto hace que `System.getenv("DB_USER")` funcione al ejecutar la app desde Eclipse.
 
 ---
 
 ## 2. Dockerfile
 
-Nunca incluir secretos directamente. Solo se declaran variables vacías como documentación:
+Nunca incluir secretos directamente. Solo declarar variables vacías como documentación:
 
 ```dockerfile
 # Documentación de variables esperadas en runtime
@@ -45,13 +58,13 @@ ENV DB_USER=""
 ENV DB_PASSWORD=""
 ```
 
-Los valores reales se pasan al ejecutar el contenedor. La aplicación sigue usando `System.getenv()` para leerlos.
+> La aplicación sigue leyendo los valores con `System.getenv()` en tiempo de ejecución. Los secretos reales se pasan al contenedor.
 
 ---
 
 ## 3. Docker (runtime)
 
-**Opción A — En línea:**
+**Opción A — Variables en línea:**
 ```bash
 docker run -e DB_USER=mi_usuario -e DB_PASSWORD=mi_password -p 8080:8080 mi-imagen
 ```
@@ -74,7 +87,14 @@ docker run --env-file .env -p 8080:8080 mi-imagen
 
 ## 4. Docker Compose
 
-**Opción A — `env_file`:**
+Archivo `.env`:
+```
+DB_USER=mi_usuario
+DB_PASSWORD=mi_password
+DB_ROOT_PASSWORD=root
+```
+
+Archivo `docker-compose.yml`:
 ```yaml
 version: "3.8"
 
@@ -89,27 +109,24 @@ services:
       - db
 
   db:
-    image: mysql:8
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: mi_base_datos
+    image: mysql:latest
+    container_name: mysql_vdlp
+    hostname: mysql.vdlp
     ports:
       - "3306:3306"
+    env_file:
+      - .env
+    volumes:
+      - ./mysql/conf.d:/etc/mysql/conf.d
+      - ./mysql/init:/docker-entrypoint-initdb.d
+      - mysql_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  mysql_data:
 ```
 
-**Opción B — Interpolación de variables:**
-```yaml
-services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-```
-
-> `depends_on` solo espera a que el contenedor arranque, no a que MySQL esté listo para aceptar conexiones. Considera usar healthchecks o lógica de retry en la aplicación.
+> `depends_on` solo garantiza que el contenedor `db` haya **arrancado**, no que MySQL esté listo para aceptar conexiones. La aplicación puede fallar al inicio si intenta conectarse antes de que MySQL termine de inicializarse. Se recomienda añadir lógica de reintento en la aplicación.
 
 ---
 
@@ -142,7 +159,7 @@ jobs:
             mi-app
 ```
 
-> Nunca uses `echo ${{ secrets.DB_PASSWORD }}` en los logs: GitHub lo enmascara, pero es una mala práctica.
+> Nunca uses `echo ${{ secrets.DB_PASSWORD }}` en logs. GitHub lo enmascara, pero sigue siendo mala práctica.
 
 ---
 
@@ -151,7 +168,7 @@ jobs:
 - No subir `.env` al repositorio.
 - No hardcodear credenciales en `config.properties` ni en el código.
 - No incluir secretos en la imagen Docker.
-- Documentar las variables necesarias sin poner valores reales (p. ej., en el `README`).
+- Documentar las variables necesarias sin poner valores reales (README, Dockerfile vacío).
 - Para producción avanzada: considerar **Secret Manager** (AWS Secrets Manager, HashiCorp Vault, Azure Key Vault).
 
 ---
@@ -161,9 +178,12 @@ jobs:
 | Entorno | Mecanismo | Dónde se definen | ¿Se sube al repo? |
 |---|---|---|---|
 | Desarrollo local | `System.getenv()` | Variables de sesión / sistema | No |
+| Eclipse | Run Configurations | Pestaña Environment en Run Config | No |
 | Dockerfile | `ENV` (vacío) | El propio Dockerfile | Sí (sin valores) |
-| Docker runtime | `-e` / `--env-file` | Línea de comandos / `.env` | No (`.env` en `.gitignore`) |
-| Docker Compose | `env_file` / `environment` | `.env` / `docker-compose.yml` | No (`.env` en `.gitignore`) |
-| GitHub Actions | `secrets.*` | Settings del repositorio | No (gestionado por GitHub) |
+| Docker runtime | `-e` / `--env-file` | Línea de comandos / `.env` | No |
+| Docker Compose | `env_file` | `.env` | No |
+| GitHub Actions | `secrets.*` | Settings del repositorio | No |
+
+
 ---
 Fuentes: [ChatGPT](https://chat.openai.com) + [Claude](https://claude.ai)
