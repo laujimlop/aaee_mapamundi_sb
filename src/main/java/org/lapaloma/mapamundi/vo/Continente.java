@@ -2,7 +2,7 @@ package org.lapaloma.mapamundi.vo;
 
 /**
  *
- * Coche: Clase de persistencia que representa un coche de un concesionario.
+ * Continente: Clase de persistencia que representa un Continente de un Mapa Mundi.
  * 
  * @author Isidoro Nevares Martín - IES Virgen de la Paloma
  * @date 03 marzo 2026

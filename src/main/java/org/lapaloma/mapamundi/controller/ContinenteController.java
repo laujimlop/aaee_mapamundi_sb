@@ -26,7 +26,7 @@ public class ContinenteController {
     public ContinenteController(ContinenteService continenteService) {
         this.continenteService = continenteService;
     }
-    
+
     // GET /api/continentes - listar todos los continentes
     @GetMapping
     public List<Continente> getAll() {

@@ -15,173 +15,173 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class ContinenteDaoJDBC implements IContinenteDAO {
-	private final DataSource dataSource;
+    private final DataSource dataSource;
 
-	// Spring inyecta el DataSource configurado automáticamente
-	public ContinenteDaoJDBC(DataSource dataSource) {
-		this.dataSource = dataSource;
-	}
+    // Spring inyecta el DataSource configurado automáticamente
+    public ContinenteDaoJDBC(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
-	@Override
-	public Continente obtenerContinentePorClave(String codigo) {
-		Continente continente = null;
+    @Override
+    public Continente obtenerContinentePorClave(String codigo) {
+        Continente continente = null;
 
-		String sentenciaSQL = """
-				SELECT * FROM T_CONTINENTE
-				WHERE codigo=?
-				""";
+        String sentenciaSQL = """
+                SELECT * FROM T_CONTINENTE
+                WHERE codigo=?
+                """;
 
-		try (Connection conexion = dataSource.getConnection();
-				PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
+        try (Connection conexion = dataSource.getConnection();
+                PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
 
-			sentenciaJDBCPreparada.setString(1, codigo);
-			System.out.println(sentenciaJDBCPreparada);
+            sentenciaJDBCPreparada.setString(1, codigo);
+            System.out.println(sentenciaJDBCPreparada);
 
-			ResultSet resultadoSentencia = sentenciaJDBCPreparada.executeQuery();
+            ResultSet resultadoSentencia = sentenciaJDBCPreparada.executeQuery();
 
-			if (resultadoSentencia.next()) {
-				continente = getLineaFromResultSet(resultadoSentencia);
-			}
+            if (resultadoSentencia.next()) {
+                continente = getLineaFromResultSet(resultadoSentencia);
+            }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-		return continente;
-	}
+        return continente;
+    }
 
-	@Override
-	public void actualizarContinente(Continente continente) {
+    @Override
+    public void actualizarContinente(Continente continente) {
 
-		String sentenciaSQL = """
-				UPDATE T_CONTINENTE
-				SET nombre_continente=?
-				WHERE codigo=?
-				""";
+        String sentenciaSQL = """
+                UPDATE T_CONTINENTE
+                SET nombre_continente=?
+                WHERE codigo=?
+                """;
 
-		try (Connection conexion = dataSource.getConnection();
-				PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
+        try (Connection conexion = dataSource.getConnection();
+                PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
 
-			sentenciaJDBCPreparada.setString(1, continente.getNombre());
-			sentenciaJDBCPreparada.setString(2, continente.getCodigo());
+            sentenciaJDBCPreparada.setString(1, continente.getNombre());
+            sentenciaJDBCPreparada.setString(2, continente.getCodigo());
 
-			System.out.println(sentenciaJDBCPreparada);
+            System.out.println(sentenciaJDBCPreparada);
 
-			sentenciaJDBCPreparada.executeUpdate();
+            sentenciaJDBCPreparada.executeUpdate();
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-	}
+    }
 
-	@Override
-	public void crearContinente(Continente continente) {
+    @Override
+    public void crearContinente(Continente continente) {
 
-		String sentenciaSQL = """
-				INSERT INTO T_CONTINENTE (codigo, nombre_continente)
-				VALUES (?, ?)
-				""";
+        String sentenciaSQL = """
+                INSERT INTO T_CONTINENTE (codigo, nombre_continente)
+                VALUES (?, ?)
+                """;
 
-		try (Connection conexion = dataSource.getConnection();
-				PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
+        try (Connection conexion = dataSource.getConnection();
+                PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
 
-			sentenciaJDBCPreparada.setString(1, continente.getCodigo());
-			sentenciaJDBCPreparada.setString(2, continente.getNombre());
+            sentenciaJDBCPreparada.setString(1, continente.getCodigo());
+            sentenciaJDBCPreparada.setString(2, continente.getNombre());
 
-			System.out.println(sentenciaJDBCPreparada);
+            System.out.println(sentenciaJDBCPreparada);
 
-			sentenciaJDBCPreparada.executeUpdate();
+            sentenciaJDBCPreparada.executeUpdate();
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	@Override
-	public void borrarContinente(Continente continente) {
+    @Override
+    public void borrarContinente(Continente continente) {
 
-		String sentenciaSQL = """
-				DELETE FROM T_CONTINENTE
-				WHERE codigo=?
-				""";
+        String sentenciaSQL = """
+                DELETE FROM T_CONTINENTE
+                WHERE codigo=?
+                """;
 
-		try (Connection conexion = dataSource.getConnection();
-				PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
+        try (Connection conexion = dataSource.getConnection();
+                PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
 
-			sentenciaJDBCPreparada.setString(1, continente.getCodigo());
+            sentenciaJDBCPreparada.setString(1, continente.getCodigo());
 
-			sentenciaJDBCPreparada.executeUpdate();
+            sentenciaJDBCPreparada.executeUpdate();
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	@Override
-	public List<Continente> obtenerListaContinentes() {
+    @Override
+    public List<Continente> obtenerListaContinentes() {
 
-		List<Continente> lista = new ArrayList<>();
+        List<Continente> lista = new ArrayList<>();
 
-		String sentenciaSQL = """
-				SELECT * FROM T_CONTINENTE
-				""";
+        String sentenciaSQL = """
+                SELECT * FROM T_CONTINENTE
+                """;
 
-		try (Connection conexion = dataSource.getConnection();
-				PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
+        try (Connection conexion = dataSource.getConnection();
+                PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
 
-			System.out.println(sentenciaJDBCPreparada);
+            System.out.println(sentenciaJDBCPreparada);
 
-			ResultSet resultadoSentencia = sentenciaJDBCPreparada.executeQuery();
+            ResultSet resultadoSentencia = sentenciaJDBCPreparada.executeQuery();
 
-			while (resultadoSentencia.next()) {
-				lista.add(getLineaFromResultSet(resultadoSentencia));
-			}
+            while (resultadoSentencia.next()) {
+                lista.add(getLineaFromResultSet(resultadoSentencia));
+            }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-		return lista;
-	}
+        return lista;
+    }
 
-	@Override
-	public List<Continente> obtenerContinentePorNombre(String nombre) {
+    @Override
+    public List<Continente> obtenerContinentePorNombre(String nombre) {
 
-		List<Continente> lista = new ArrayList<>();
+        List<Continente> lista = new ArrayList<>();
 
-		String sentenciaSQL = """
-				SELECT * FROM T_CONTINENTE
-				WHERE nombre_continente LIKE ?
-				""";
+        String sentenciaSQL = """
+                SELECT * FROM T_CONTINENTE
+                WHERE nombre_continente LIKE ?
+                """;
 
-		try (Connection conexion = dataSource.getConnection();
-				PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
+        try (Connection conexion = dataSource.getConnection();
+                PreparedStatement sentenciaJDBCPreparada = conexion.prepareStatement(sentenciaSQL);) {
 
-			sentenciaJDBCPreparada.setString(1, "%" + nombre + "%");
+            sentenciaJDBCPreparada.setString(1, "%" + nombre + "%");
 
-			System.out.println(sentenciaJDBCPreparada);
+            System.out.println(sentenciaJDBCPreparada);
 
-			ResultSet resultadoSentencia = sentenciaJDBCPreparada.executeQuery();
+            ResultSet resultadoSentencia = sentenciaJDBCPreparada.executeQuery();
 
-			while (resultadoSentencia.next()) {
-				lista.add(getLineaFromResultSet(resultadoSentencia));
-			}
+            while (resultadoSentencia.next()) {
+                lista.add(getLineaFromResultSet(resultadoSentencia));
+            }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-		return lista;
-	}
+        return lista;
+    }
 
-	private Continente getLineaFromResultSet(ResultSet resultadoSentencia) throws SQLException {
+    private Continente getLineaFromResultSet(ResultSet resultadoSentencia) throws SQLException {
 
-		Continente continente = new Continente();
+        Continente continente = new Continente();
 
-		continente.setCodigo(resultadoSentencia.getString("codigo"));
-		continente.setNombre(resultadoSentencia.getString("nombre_continente"));
+        continente.setCodigo(resultadoSentencia.getString("codigo"));
+        continente.setNombre(resultadoSentencia.getString("nombre_continente"));
 
-		return continente;
-	}
+        return continente;
+    }
 }
